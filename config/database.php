@@ -1,8 +1,8 @@
 <?php
-$host = getenv('DB_HOST') ?: 'localhost';
-$db   = getenv('DB_NAME') ?: 'lamina_landscaping';
-$user = getenv('DB_USER') ?: 'root';
-$pass = getenv('DB_PASS') ?: '';
+$host = getenv('DB_HOST') ?: 'sql7.freesqldatabase.com';
+$db   = getenv('DB_NAME') ?: 'sql7840058';
+$user = getenv('DB_USER') ?: 'sql7840058';
+$pass = getenv('DB_PASS') ?: 'T8iVkVNASV';
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
