@@ -1,0 +1,11 @@
+# Prevent directory browsing
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "^\.(env|git|sql)">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Optional: Enable Rewrite Engine for friendly URLs
+RewriteEngine On
