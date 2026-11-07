@@ -29,9 +29,9 @@ require_once 'includes/header.php';
             <?php foreach($products as $p): ?>
                 <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
-                        <?php if (!empty($p['image_url'])): ?>
+                        <?php if (!empty($p['image'])): ?>
                             <div style="height: 140px; border-radius: 8px; margin-bottom: 15px; overflow: hidden;">
-                                <img src="<?php echo htmlspecialchars($p['image_url']); ?>" alt="<?php echo htmlspecialchars($p['name']); ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                                <img src="<?php echo htmlspecialchars($p['image']); ?>" alt="<?php echo htmlspecialchars($p['name']); ?>" style="width: 100%; height: 100%; object-fit: cover;">
                             </div>
                         <?php else: ?>
                             <div style="height: 140px; background: #e5e7eb; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #4b5563;">
