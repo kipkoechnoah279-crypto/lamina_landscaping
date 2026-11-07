@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
         $description = sanitize_input($_POST['description'] ?? '');
         $image = sanitize_input($_POST['image_url'] ?? '');
 
-        // Handle File Upload if selected and directory is writable
+        // Handle File Upload if selected
         if (isset($_FILES['image_file']) && $_FILES['image_file']['error'] === UPLOAD_ERR_OK) {
             $fileTmpPath = $_FILES['image_file']['tmp_name'];
             $fileName = $_FILES['image_file']['name'];
@@ -57,16 +57,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
 
                 if (move_uploaded_file($fileTmpPath, $dest_path)) {
                     $image = 'assets/img/' . $newFileName;
+                } else {
+                    $error = "Error: Failed to move uploaded file.";
                 }
+            } else {
+                $error = "Error: Upload directory is not writable. Please use an Image URL instead.";
             }
         }
 
-        try {
-            $stmt = $pdo->prepare("INSERT INTO products (name, category, price, unit, stock, description, image) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$name, $category, $price, $unit, $stock, $description, $image]);
-            $msg = "Product added successfully!";
-        } catch (\PDOException $e) {
-            $error = "Database Error: " . $e->getMessage();
+        // Only proceed with database insertion if no upload errors occurred
+        if (empty($error)) {
+            try {
+                $stmt = $pdo->prepare("INSERT INTO products (name, category, price, unit, stock, description, image) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$name, $category, $price, $unit, $stock, $description, $image]);
+                $msg = "Product added successfully!";
+            } catch (\PDOException $e) {
+                $error = "Database Error: " . $e->getMessage();
+            }
         }
     }
 }
