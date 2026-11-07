@@ -41,39 +41,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
         $description = sanitize_input($_POST['description'] ?? '');
         $image = sanitize_input($_POST['image_url'] ?? '');
 
-        // Handle File Upload if selected
-        if (isset($_FILES['image_file']) && $_FILES['image_file']['error'] === UPLOAD_ERR_OK) {
-            $fileTmpPath = $_FILES['image_file']['tmp_name'];
-            $fileName = $_FILES['image_file']['name'];
-            $uploadFileDir = '../assets/img/';
-            
-            if (!is_dir($uploadFileDir)) {
-                @mkdir($uploadFileDir, 0755, true);
-            }
-            
-            if (is_writable($uploadFileDir)) {
-                $newFileName = md5(time() . $fileName) . '.' . pathinfo($fileName, PATHINFO_EXTENSION);
-                $dest_path = $uploadFileDir . $newFileName;
-
-                if (move_uploaded_file($fileTmpPath, $dest_path)) {
-                    $image = 'assets/img/' . $newFileName;
-                } else {
-                    $error = "Error: Failed to move uploaded file.";
-                }
-            } else {
-                $error = "Error: Upload directory is not writable. Please use an Image URL instead.";
-            }
-        }
-
-        // Only proceed with database insertion if no upload errors occurred
-        if (empty($error)) {
-            try {
-                $stmt = $pdo->prepare("INSERT INTO products (name, category, price, unit, stock, description, image) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$name, $category, $price, $unit, $stock, $description, $image]);
-                $msg = "Product added successfully!";
-            } catch (\PDOException $e) {
-                $error = "Database Error: " . $e->getMessage();
-            }
+        try {
+            $stmt = $pdo->prepare("INSERT INTO products (name, category, price, unit, stock, description, image) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$name, $category, $price, $unit, $stock, $description, $image]);
+            $msg = "Product added successfully!";
+        } catch (\PDOException $e) {
+            $error = "Database Error: " . $e->getMessage();
         }
     }
 }
@@ -88,7 +61,7 @@ require_once '../includes/header.php';
 
     <div class="card" style="margin: 20px 0;">
         <h3>Add New Nursery Item with Details</h3>
-        <form method="POST" enctype="multipart/form-data" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+        <form method="POST" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
             <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
             <input type="text" name="name" placeholder="Item Name" required class="form-control">
             <select name="category" class="form-control">
@@ -99,16 +72,11 @@ require_once '../includes/header.php';
             <input type="number" step="0.01" name="price" placeholder="Price (KSh)" required class="form-control">
             <input type="text" name="unit" placeholder="Unit (e.g. sqm, pot)" required class="form-control">
             <input type="number" name="stock" placeholder="Stock Quantity" required class="form-control">
-            <input type="text" name="image_url" placeholder="Or Image URL (https://...)" class="form-control">
+            <input type="text" name="image_url" placeholder="Image URL or Path (https://... or assets/img/...)" required class="form-control" style="grid-column: span 2;">
             
             <div style="grid-column: span 2;">
                 <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 5px;">Product Description & Care Instructions</label>
                 <textarea name="description" rows="3" placeholder="Enter plant care tips, dimensions, or features..." class="form-control"></textarea>
-            </div>
-
-            <div style="grid-column: span 2;">
-                <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 5px;">Upload Image File (Optional)</label>
-                <input type="file" name="image_file" accept="image/*" class="form-control">
             </div>
 
             <button type="submit" name="add_product" class="btn btn-primary" style="grid-column: span 2;">Save Item</button>
