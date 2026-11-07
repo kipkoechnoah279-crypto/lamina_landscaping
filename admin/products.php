@@ -11,11 +11,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_product'])) {
         $product_id = (int)$_POST['product_id'];
         
         // Fetch image to delete file from server if stored locally
-        $stmtImg = $pdo->prepare("SELECT image_url FROM products WHERE id = ?");
+        $stmtImg = $pdo->prepare("SELECT image FROM products WHERE id = ?");
         $stmtImg->execute([$product_id]);
         $prod = $stmtImg->fetch();
-        if ($prod && !empty($prod['image_url']) && strpos($prod['image_url'], 'http') !== 0) {
-            $filePath = '../' . $prod['image_url'];
+        if ($prod && !empty($prod['image']) && strpos($prod['image'], 'http') !== 0) {
+            $filePath = '../' . $prod['image'];
             if (file_exists($filePath)) {
                 @unlink($filePath);
             }
@@ -39,29 +39,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
         $unit = sanitize_input($_POST['unit']);
         $stock = (int)$_POST['stock'];
         $description = sanitize_input($_POST['description'] ?? '');
-        $image_url = sanitize_input($_POST['image_url'] ?? '');
+        $image = sanitize_input($_POST['image_url'] ?? '');
 
-        // Handle File Upload if selected
+        // Handle File Upload if selected and directory is writable
         if (isset($_FILES['image_file']) && $_FILES['image_file']['error'] === UPLOAD_ERR_OK) {
             $fileTmpPath = $_FILES['image_file']['tmp_name'];
             $fileName = $_FILES['image_file']['name'];
             $uploadFileDir = '../assets/img/';
             
             if (!is_dir($uploadFileDir)) {
-                mkdir($uploadFileDir, 0755, true);
+                @mkdir($uploadFileDir, 0755, true);
             }
             
-            $newFileName = md5(time() . $fileName) . '.' . pathinfo($fileName, PATHINFO_EXTENSION);
-            $dest_path = $uploadFileDir . $newFileName;
+            if (is_writable($uploadFileDir)) {
+                $newFileName = md5(time() . $fileName) . '.' . pathinfo($fileName, PATHINFO_EXTENSION);
+                $dest_path = $uploadFileDir . $newFileName;
 
-            if (move_uploaded_file($fileTmpPath, $dest_path)) {
-                $image_url = 'assets/img/' . $newFileName;
+                if (move_uploaded_file($fileTmpPath, $dest_path)) {
+                    $image = 'assets/img/' . $newFileName;
+                }
             }
         }
 
-        $stmt = $pdo->prepare("INSERT INTO products (name, category, price, unit, stock, description, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$name, $category, $price, $unit, $stock, $description, $image_url]);
-        $msg = "Product added successfully with description and image!";
+        try {
+            $stmt = $pdo->prepare("INSERT INTO products (name, category, price, unit, stock, description, image) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$name, $category, $price, $unit, $stock, $description, $image]);
+            $msg = "Product added successfully!";
+        } catch (\PDOException $e) {
+            $error = "Database Error: " . $e->getMessage();
+        }
     }
 }
 
@@ -94,7 +100,7 @@ require_once '../includes/header.php';
             </div>
 
             <div style="grid-column: span 2;">
-                <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 5px;">Upload Image File</label>
+                <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 5px;">Upload Image File (Optional)</label>
                 <input type="file" name="image_file" accept="image/*" class="form-control">
             </div>
 
@@ -110,8 +116,8 @@ require_once '../includes/header.php';
             <?php foreach($products as $p): ?>
                 <tr>
                     <td>
-                        <?php if (!empty($p['image_url'])): ?>
-                            <img src="<?php echo (strpos($p['image_url'], 'http') === 0) ? $p['image_url'] : '../' . $p['image_url']; ?>" alt="" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;">
+                        <?php if (!empty($p['image'])): ?>
+                            <img src="<?php echo (strpos($p['image'], 'http') === 0) ? $p['image'] : '../' . $p['image']; ?>" alt="" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;">
                         <?php else: ?>
                             <div style="width: 50px; height: 50px; background: #e5e7eb; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #666;">No Img</div>
                         <?php endif; ?>
