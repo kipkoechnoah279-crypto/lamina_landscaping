@@ -14,8 +14,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['process_payment'])) {
             $stmtProducts = $pdo->query("SELECT * FROM products WHERE id IN ($ids)");
             $products = $stmtProducts->fetchAll();
             
+            // Fixed: Changed product_name to name to match database schema
             $stmtInsert = $pdo->prepare("
-                INSERT INTO orders (user_id, product_name, quantity, price, total_price, total_amount, payment_method, mpesa_reference, status) 
+                INSERT INTO orders (user_id, name, quantity, price, total_price, total_amount, payment_method, mpesa_reference, status) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending')
             ");
 
