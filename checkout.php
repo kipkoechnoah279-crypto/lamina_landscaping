@@ -14,10 +14,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['process_payment'])) {
             $stmtProducts = $pdo->query("SELECT * FROM products WHERE id IN ($ids)");
             $products = $stmtProducts->fetchAll();
             
-            // Using 'name' to match the orders table schema
+            // Removed product name column to match the existing orders table schema
             $stmtInsert = $pdo->prepare("
-                INSERT INTO orders (user_id, name, quantity, price, total_price, total_amount, payment_method, mpesa_reference, status) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending')
+                INSERT INTO orders (user_id, quantity, price, total_price, total_amount, payment_method, mpesa_reference, status) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')
             ");
 
             $grandTotal = 0;
@@ -27,10 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['process_payment'])) {
                 $itemSubtotal = $price * $qty;
                 $grandTotal += $itemSubtotal;
 
-                // Insert directly into orders table
+                // Insert directly into orders table without product name
                 $stmtInsert->execute([
                     $_SESSION['user_id'],
-                    $p['name'],
                     $qty,
                     $price,
                     $itemSubtotal,
